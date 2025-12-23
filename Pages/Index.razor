@@ -1,0 +1,100 @@
+﻿@page "/"
+@inject NavigationManager Nav
+
+<div class="landing-wrapper d-flex flex-column align-items-center justify-content-center">
+    @* --- GLOWING TITLE --- *@
+    <div class="text-center mb-5 animate__animated animate__fadeInDown">
+        <h1 class="display-3 fw-bold brand-title">SKY<span class="text-info">CONTROL</span></h1>
+        <p class="lead text-light-muted">Next-Gen Airport Runway Management System</p>
+    </div>
+
+    <div class="row w-100 justify-content-center px-3">
+        @* --- PILOT CARD --- *@
+        <div class="col-md-5 col-lg-4 mb-4">
+            <div class="glass-card h-100 text-center p-4 landing-card shadow-glow-blue">
+                <div class="card-body">
+                    <div class="display-2 mb-3">✈️</div>
+                    <h2 class="fw-bold text-white">Airline Portal</h2>
+                    <p class="text-light-muted mb-4">Manage flight schedules and request runway slots in real-time.</p>
+                    <button class="btn btn-info btn-lg w-100 fw-bold neon-btn-blue" @onclick='() => Nav.NavigateTo("/login/pilot")'>
+                        ENTER AS PILOT
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @* --- ADMIN CARD --- *@
+        <div class="col-md-5 col-lg-4 mb-4">
+            <div class="glass-card h-100 text-center p-4 landing-card shadow-glow-red">
+                <div class="card-body">
+                    <div class="display-2 mb-3">📡</div>
+                    <h2 class="fw-bold text-white">ATC Tower</h2>
+                    <p class="text-light-muted mb-4">Oversee runways, resolve conflicts, and manage system overrides.</p>
+                    <button class="btn btn-danger btn-lg w-100 fw-bold neon-btn-red" @onclick='() => Nav.NavigateTo("/login/admin")'>
+                        ENTER AS ADMIN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .landing-wrapper {
+        min-height: 85vh; /* Centers content vertically within the layout */
+    }
+
+    .brand-title {
+        color: white;
+        letter-spacing: 4px;
+        text-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+    }
+
+    .text-light-muted {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+
+    /* GLASS CARD STYLE */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(15px) saturate(180%);
+        -webkit-backdrop-filter: blur(15px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 30px;
+        transition: all 0.4s ease;
+    }
+
+    .landing-card:hover {
+        transform: translateY(-15px);
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* NEON BUTTONS & GLOWS */
+    .neon-btn-blue {
+        background: #00d2ff !important;
+        border: none;
+        color: #000 !important;
+        box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+    }
+
+    .neon-btn-red {
+        background: #ff4d4d !important;
+        border: none;
+        color: white !important;
+        box-shadow: 0 0 15px rgba(255, 77, 77, 0.4);
+    }
+
+    .shadow-glow-blue:hover {
+        box-shadow: 0 0 40px rgba(0, 210, 255, 0.2) !important;
+    }
+
+    .shadow-glow-red:hover {
+        box-shadow: 0 0 40px rgba(255, 77, 77, 0.2) !important;
+    }
+
+    .btn:hover {
+        filter: brightness(1.2);
+        transform: scale(1.02);
+    }
+</style>

@@ -1,0 +1,234 @@
+﻿@page "/dashboard"
+@using BlazorApp1.Services
+@inject SlotService SlotService
+@inject AirportService AirportService
+@inject NavigationManager Nav
+@implements IDisposable
+
+<div class="dashboard-wrapper">
+    @if (SlotService.CurrentUser == null)
+    {
+            <div class="d-flex justify-content-center align-items-center" style="height: 100vh;">
+                <div class="spinner-border text-info" role="status"></div>
+                <span class="ms-3 fw-bold text-white">Authenticating Tower Link...</span>
+            </div>
+    }
+    else
+    {
+            <div class="container-fluid py-4 px-lg-5">
+            @* --- TOP HEADER SECTION --- *@
+                <div class="d-flex justify-content-between align-items-end mb-4">
+                    <div>
+                        <h2 class="display-6 fw-bold mb-1 brand-text">Radar Dashboard</h2>
+                        <p class="text-light-muted mb-0">
+                            <span class="dot-live"></span> @AirportService.WeatherStatus Operations — @DateTime.Now.ToString("dd MMM yyyy")
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        <button class="btn btn-sm btn-outline-light mb-2" @onclick='() => { SlotService.Logout(); Nav.NavigateTo("/"); }'>Logout</button>
+                        <br />
+                        <span class="glass-pill px-3 py-2">
+                            <i class="bi bi-person-circle me-2"></i> @SlotService.CurrentUser.Username (@SlotService.CurrentUser.Role)
+                        </span>
+                    </div>
+                </div>
+
+            @* --- ADMIN PANEL: MASTER CONTROLS --- *@
+            @if (SlotService.CurrentUser.Role == "Admin")
+            {
+                        <div class="admin-panel glass-card mb-4 p-4 shadow-sm border-info-subtle">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <h5 class="fw-bold mb-0 text-info"><i class="bi bi-gear-fill me-2"></i> Tower Controls</h5>
+                            @* Updated: Pass Admin Name to the Toggle method *@
+                                    <button class="btn btn-sm @(AirportService.IsRunwayOpen ? "btn-outline-success" : "btn-danger") mt-2 w-100" 
+                                            @onclick='() => AirportService.ToggleRunway(SlotService.CurrentUser.Username)'>
+                                @(AirportService.IsRunwayOpen ? "Runway: OPEN" : "Runway: EMERGENCY CLOSED")
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="x-small fw-bold text-uppercase text-light-muted">Operating Start</label>
+                                    <input type="time" class="form-control form-control-sm custom-input" 
+                                           value="@SlotService.StartTime.ToString("HH:mm")" 
+                                           @onchange='(e) => UpdateStartTime(e.Value?.ToString())' />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="x-small fw-bold text-uppercase text-light-muted">Environment</label>
+                            @* Updated: Pass Admin Name to Weather update *@
+                                    <select class="form-select form-select-sm custom-input" 
+                                            @onchange='(e) => AirportService.SetWeather(e.Value.ToString(), SlotService.CurrentUser.Username)'>
+                                        <option value="Clear Skies">Clear Skies</option>
+                                        <option value="Thunderstorm">Thunderstorm (Grounded)</option>
+                                        <option value="Heavy Fog">Heavy Fog</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 text-center border-start border-secondary">
+                                    <div class="h4 fw-bold mb-0 text-warning">@SlotService.GetSlots().Count(s => s.Status == "Pending")</div>
+                                    <div class="x-small text-light-muted text-uppercase">Pending Approvals</div>
+                                </div>
+                            </div>
+                        </div>
+            }
+
+            @* --- SEARCH BAR --- *@
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="input-group glass-card border-0">
+                            <span class="input-group-text bg-transparent border-0 text-info"><i class="bi bi-search"></i></span>
+                            <input @bind="searchTerm" @bind:event="oninput" class="form-control bg-transparent border-0 text-white" placeholder="Search by Flight ID (e.g. PK-302)..." />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                @* --- LEFT: PILOT BOOKING FORM --- *@
+                @if (SlotService.CurrentUser.Role == "Pilot")
+                {
+                            <div class="col-lg-4">
+                                <div class="booking-card glass-card p-4 shadow">
+                                    <h4 class="fw-bold mb-4">Request Slot</h4>
+
+                            @* SMART LOGIC: Check both Runway status AND Weather status *@
+                            @{
+                                bool isGrounded = !AirportService.IsRunwayOpen || AirportService.WeatherStatus == "Thunderstorm";
+                            }
+
+                            @if (isGrounded)
+                            {
+                                            <div class="alert alert-danger-glass border-danger animate__animated animate__flash">
+                                                <i class="bi bi-cloud-lightning-rain-fill me-2"></i> 
+                                                <strong>FLIGHTS SUSPENDED:</strong> 
+                                    @(AirportService.WeatherStatus == "Thunderstorm" ? "Severe Weather Conditions" : "ATC Manual Lockdown")
+                                            </div>
+                            }
+                            else
+                            {
+                                            <div class="mb-3">
+                                                <label class="form-label small fw-bold">Flight Identifier</label>
+                                                <input @bind="flightNum" class="form-control custom-input" placeholder="e.g. PK-302" />
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label small fw-bold">Scheduled Time</label>
+                                                <input @bind="reqTime" type="datetime-local" class="form-control custom-input" />
+                                            </div>
+                                            <button class="btn btn-info w-100 py-3 fw-bold rounded-3 mb-3 shadow-glow" @onclick="HandleBooking">
+                                                <i class="bi bi-send me-2"></i> File Flight Plan
+                                            </button>
+                            }
+
+                            @if (!string.IsNullOrEmpty(feedback))
+                            {
+                                            <div class="alert @(feedback == "Success" ? "alert-success-glass" : "alert-warning-glass")">
+                                    @feedback
+                                            </div>
+                            }
+                                </div>
+                            </div>
+                }
+
+                @* --- RIGHT: FLIGHT LIST --- *@
+                    <div class="@(SlotService.CurrentUser.Role == "Pilot" ? "col-lg-8" : "col-12")">
+                        <div class="flight-feed">
+                        @foreach (var slot in SlotService.GetSlots(searchTerm).OrderBy(s => s.ScheduledTime))
+                        {
+                            bool hasConflict = SlotService.GetSlots().Any(s => s.Id != slot.Id && Math.Abs((s.ScheduledTime - slot.ScheduledTime).TotalMinutes) < 60);
+
+                                    <div class="flight-strip glass-card mb-3 @(hasConflict ? "border-warning-glow" : "") animate__animated animate__fadeInUp">
+                                        <div class="time-box text-center">
+                                            <span class="h4 fw-bold mb-0">@slot.ScheduledTime.ToString("HH:mm")</span>
+                                            <span class="x-small text-light-muted fw-bold text-uppercase d-block">UTC</span>
+                                        </div>
+                                        <div class="info-box ps-4 flex-grow-1">
+                                            <div class="d-flex align-items-center">
+                                                <h5 class="fw-bold mb-0 me-3 text-info">@slot.FlightNumber</h5>
+                                                <span class="status-pill @slot.Status.ToLower()">@slot.Status</span>
+                                        @if (hasConflict)
+                                        {
+                                                        <span class="ms-2 badge bg-danger-subtle text-danger x-small border border-danger">CONFLICT RISK</span>
+                                        }
+                                            </div>
+                                            <small class="text-light-muted"><i class="bi bi-person me-1"></i> Pilot: @slot.PilotName</small>
+                                        </div>
+                                        <div class="action-box text-end">
+                                    @if (SlotService.CurrentUser.Role == "Admin")
+                                    {
+                                        @if (slot.Status == "Pending")
+                                        {
+                                                            <button class="btn btn-success btn-sm me-2 rounded-pill" @onclick="() => SlotService.ApproveSlot(slot.Id)">APPROVE</button>
+                                        }
+                                                    <button class="btn btn-outline-danger btn-sm rounded-circle" @onclick="() => SlotService.RemoveSlot(slot.Id)">
+                                                        <i class="bi bi-trash3"></i>
+                                                    </button>
+                                    }
+                                        </div>
+                                    </div>
+                        }
+                        </div>
+                    </div>
+                </div>
+
+            @* --- NEW: SYSTEM AUDIT LOG SECTION --- *@
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <div class="glass-card p-4">
+                            <h6 class="x-small fw-bold text-info text-uppercase mb-3">System Audit Log (Live Feed)</h6>
+                            <div class="log-container" style="max-height: 150px; overflow-y: auto;">
+                            @foreach (var log in AirportService.SystemLogs)
+                            {
+                                        <div class="log-entry border-bottom border-secondary py-1 x-small opacity-75">
+                                            <i class="bi bi-terminal me-2 text-info"></i> @log
+                                        </div>
+                            }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    }
+</div>
+
+@code {
+    private string flightNum = "";
+    private string searchTerm = "";
+    private DateTime reqTime = DateTime.Now;
+    private string feedback = "";
+
+    protected override void OnInitialized()
+    {
+        if (SlotService.CurrentUser == null) Nav.NavigateTo("/");
+
+        SlotService.OnStateChanged += StateHasChanged;
+        AirportService.OnStateChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        SlotService.OnStateChanged -= StateHasChanged;
+        AirportService.OnStateChanged -= StateHasChanged;
+    }
+
+    void HandleBooking()
+    {
+        if (string.IsNullOrWhiteSpace(flightNum)) { feedback = "Identifier required."; return; }
+        feedback = SlotService.BookSlot(flightNum, reqTime, "Arrival");
+
+        if (feedback == "Success")
+        {
+            AirportService.AddLog($"Flight {flightNum} requested by {SlotService.CurrentUser?.Username}");
+            flightNum = "";
+        }
+    }
+
+    void UpdateStartTime(string? val)
+    {
+        if (DateTime.TryParse(val, out var time)) SlotService.StartTime = DateTime.Today.Add(time.TimeOfDay);
+    }
+}
+
+<style>
+    /* ... Keep your existing styles and add these ... */
+    .log-container::-webkit-scrollbar { width: 4px; }
+    .log-container::-webkit-scrollbar-thumb { background: rgba(0, 210, 255, 0.3); border-radius: 10px; }
+    .log-entry { font-family: 'Courier New', monospace; font-size: 0.85rem; color: #d1d1d1; }
+    .alert-danger-glass { background: rgba(220, 53, 69, 0.15); border: 1px solid #dc3545; color: #ea868f; padding: 15px; border-radius: 12px; }
+</style>

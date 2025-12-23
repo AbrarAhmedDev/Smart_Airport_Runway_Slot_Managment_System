@@ -1,0 +1,108 @@
+﻿@page "/login/{Role}"
+@using BlazorApp1.Services
+@inject SlotService SlotService
+@inject NavigationManager Nav
+
+<div class="login-wrapper">
+    <div class="glass-card p-5 animate__animated animate__zoomIn">
+        <div class="text-center mb-4">
+            <span class="display-4">@(Role == "admin" ? "📡" : "✈️")</span>
+            <h2 class="fw-bold mt-2 text-white">@Role.ToUpper() PORTAL</h2>
+            <div class="status-text"><span class="pulse-green"></span> SYSTEM ONLINE</div>
+        </div>
+
+        @if (isSignupMode)
+        {
+                <div class="mb-3">
+                    <label class="small text-info fw-bold">CREATE USERNAME</label>
+                    <input @bind="user" class="form-control glass-input" />
+                </div>
+                <div class="mb-4">
+                    <label class="small text-info fw-bold">CREATE PASSWORD</label>
+                    <input @bind="pass" type="password" class="form-control glass-input" />
+                </div>
+                <button class="btn btn-info w-100 py-2 fw-bold neon-blue" @onclick="DoSignup">REGISTER PILOT</button>
+                <p class="text-center mt-3 small text-white-50">
+                    Already have an account? <a href="javascript:void(0)" class="text-info" @onclick="() => isSignupMode = false">Login</a>
+                </p>
+        }
+        else
+        {
+                <div class="mb-3">
+                    <label class="small text-info fw-bold">IDENTIFICATION</label>
+                    <input @bind="user" class="form-control glass-input" placeholder="Username" />
+                </div>
+                <div class="mb-4">
+                    <label class="small text-info fw-bold">SECURITY KEY</label>
+                    <input @bind="pass" type="password" class="form-control glass-input" placeholder="Password" />
+                </div>
+                <button class="btn @(Role == "admin" ? "btn-danger neon-red" : "btn-info neon-blue") w-100 py-2 fw-bold" @onclick="DoLogin">
+                    ESTABLISH LINK
+                </button>
+
+            @if (Role == "pilot")
+            {
+                        <div class="text-center mt-4 border-top border-secondary pt-3">
+                            <button class="btn btn-sm btn-outline-light opacity-50" @onclick="() => isSignupMode = true">New Pilot Signup</button>
+                        </div>
+            }
+        }
+
+        @if (!string.IsNullOrEmpty(msg))
+        {
+                <div class="alert-glass mt-3 text-center">@msg</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Role { get; set; } = "pilot";
+    private string user = "", pass = "", msg = "";
+    private bool isSignupMode = false;
+
+    void DoLogin()
+    {
+        if (SlotService.Login(user, pass)) Nav.NavigateTo("/dashboard");
+        else msg = "❌ ACCESS DENIED";
+    }
+
+    void DoSignup()
+    {
+        if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass)) { msg = "❌ FIELDS EMPTY"; return; }
+        SlotService.Signup(user, pass, Role == "admin" ? "Admin" : "Pilot");
+        msg = "✅ ACCOUNT CREATED";
+        isSignupMode = false;
+    }
+}
+
+<style>
+    .login-wrapper { height: 80vh; display: flex; align-items: center; justify-content: center; }
+
+    .glass-card {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 25px;
+        width: 100%; max-width: 420px;
+    }
+
+    .glass-input {
+        background: rgba(0, 0, 0, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+    }
+
+    .neon-blue { background: #00d2ff !important; color: black !important; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+    .neon-red { background: #ff4d4d !important; color: white !important; box-shadow: 0 0 15px rgba(255, 77, 77, 0.4); }
+
+    .status-text { font-size: 0.65rem; color: #10b981; font-weight: bold; letter-spacing: 1px; }
+    .pulse-green { height: 6px; width: 6px; background: #10b981; border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulse-g 2s infinite; }
+
+    @@keyframes pulse-g {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .alert-glass { background: rgba(255, 255, 255, 0.05); padding: 10px; border-radius: 10px; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.1); }
+</style>

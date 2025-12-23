@@ -1,0 +1,192 @@
+﻿@inherits LayoutComponentBase
+@using BlazorApp1.Services
+@inject SlotService SlotService
+@inject NavigationManager Nav
+
+<div class="main-wrapper">
+    @* --- TOP DARK GLASS NAVIGATION --- *@
+    <header class="glass-header">
+        <div class="header-container">
+
+            @* 1. Brand Section *@
+            <div class="logo-section" @onclick='() => Nav.NavigateTo("/")'>
+                <span class="icon">✈️</span>
+                <span class="brand">SKY<span class="brand-alt">CONTROL</span></span>
+            </div>
+
+            @* 2. Center Navigation Links *@
+            <div class="nav-center">
+                <NavMenu />
+            </div>
+
+            @* 3. User & System Section *@
+            <div class="user-section">
+                @if (SlotService.CurrentUser != null)
+                {
+                        <div class="status-indicator">
+                            <span class="dot"></span>
+                            <span class="status-text text-uppercase">@SlotService.CurrentUser.Role Tower</span>
+                        </div>
+                        <div class="divider"></div>
+                        <span class="username">@SlotService.CurrentUser.Username</span>
+                        <button class="logout-btn" @onclick="Logout">
+                            <i class="bi bi-box-arrow-right"></i> Logout
+                        </button>
+                }
+                else
+                {
+                        <span class="system-time">
+                            <i class="bi bi-clock me-1"></i> @DateTime.Now.ToString("HH:mm") UTC
+                        </span>
+                }
+            </div>
+        </div>
+    </header>
+
+    @* --- MAIN CONTENT AREA --- *@
+    <main class="content-area">
+        @* Fluid container to ensure it stretches across the screen *@
+        <div class="container-fluid py-4">
+            @Body
+        </div>
+    </main>
+</div>
+
+@code {
+    void Logout()
+    {
+        SlotService.Logout();
+        Nav.NavigateTo("/");
+    }
+}
+
+<style>
+    :root {
+        --primary-blue: #00d2ff;
+        --dark-bg: #020617;
+        --glass-white: rgba(255, 255, 255, 0.1);
+        --border-glass: rgba(255, 255, 255, 0.15);
+    }
+
+    /* 1. THE UNIVERSAL BACKGROUND (Full Screen) */
+    .main-wrapper {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        /* Replace with your local path or URL */
+        background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), 
+                    url('/images/background.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        min-height: 100vh;
+        width: 100%;
+        color: white;
+    }
+
+    /* 2. DARK GLASS HEADER */
+    .glass-header {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--border-glass);
+        height: 72px;
+        display: flex;
+        align-items: center;
+    }
+
+    .header-container {
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Logo Styling */
+    .brand {
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: white;
+        text-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+    }
+
+    .brand-alt {
+        color: var(--primary-blue);
+    }
+
+    .nav-center {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* User Section */
+    .user-section {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .status-indicator {
+        background: rgba(0, 210, 255, 0.15);
+        color: #00d2ff;
+        padding: 6px 14px;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid rgba(0, 210, 255, 0.3);
+    }
+
+    .dot {
+        width: 8px; height: 8px;
+        background: #00d2ff;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+
+    .divider { width: 1px; height: 24px; background: var(--border-glass); }
+
+    .username { font-weight: 600; font-size: 0.9rem; color: white; }
+
+    .system-time { font-size: 0.85rem; color: rgba(255, 255, 255, 0.6); }
+
+    .logout-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--border-glass);
+        color: white;
+        padding: 6px 16px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+    }
+
+    .logout-btn:hover {
+        background: rgba(225, 29, 72, 0.2);
+        border-color: #e11d48;
+        color: #fb7185;
+    }
+
+    /* Pulse Animation */
+    @@keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+    }
+
+    /* Force background to be transparent on internal containers */
+    .content-area, .container, .container-fluid {
+        background: transparent !important;
+    }
+
+    /* Clean up Blazor default UI */
+    .sidebar, .top-row { display: none !important; }
+    main { padding: 0 !important; }
+</style>

@@ -1,0 +1,81 @@
+﻿@using BlazorApp1.Services
+@inject SlotService SlotService
+
+<div class="nav-container">
+    <div class="nav-links">
+        <NavLink class="custom-nav-link" href="" Match="NavLinkMatch.All">
+            <i class="bi bi-house-door"></i> <span>Home</span>
+        </NavLink>
+
+        @if (SlotService.CurrentUser != null)
+        {
+                <NavLink class="custom-nav-link" href="dashboard">
+                    <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+                </NavLink>
+
+            @if (SlotService.CurrentUser.Role == "Admin")
+            {
+                        <div class="admin-badge">
+                            <i class="bi bi-shield-check"></i> Admin Mode
+                        </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .nav-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .nav-links {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    /* Professional Link Styling */
+    .custom-nav-link {
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.95rem;
+        padding: 8px 12px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .custom-nav-link:hover {
+        color: #0062ff;
+        background: rgba(0, 98, 255, 0.05);
+    }
+
+    /* Active State (Blazor adds 'active' class automatically) */
+    .custom-nav-link.active {
+        color: #0062ff;
+        background: rgba(0, 98, 255, 0.08);
+        font-weight: 700;
+    }
+
+    .admin-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #f59e0b;
+        background: #fffbeb;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid #fef3c7;
+        margin-left: 10px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    i {
+        font-size: 1.1rem;
+    }
+</style>
